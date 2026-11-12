@@ -277,12 +277,23 @@ launchd_paths() {
 	log_file="$home/Library/Logs/thor.log"
 }
 
+# launchd_unload 卸载已加载的 launchd 代理，并等到它完全退出：bootout 是异步的，
+# 此时立即 bootstrap 同一个标签会失败。
+launchd_unload() {
+	launchctl bootout "gui/$uid/$LAUNCHD_LABEL" 2>/dev/null || true
+	for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
+		launchctl print "gui/$uid/$LAUNCHD_LABEL" >/dev/null 2>&1 || return 0
+		sleep 0.5
+	done
+	die "等待 launchd 代理 $LAUNCHD_LABEL 退出超时"
+}
+
 install_launchd() {
 	launchd_paths
 	launchd_plist "$log_file" >"$tmp/thor.plist"
 	as_user mkdir -p "$home/Library/LaunchAgents" "$home/Library/Logs"
 	as_user cp "$tmp/thor.plist" "$plist"
-	launchctl bootout "gui/$uid/$LAUNCHD_LABEL" 2>/dev/null || true
+	launchd_unload
 	launchctl bootstrap "gui/$uid" "$plist"
 	log "已安装 launchd 代理 $LAUNCHD_LABEL（运行用户 $user，登录后自动启动），日志: $log_file"
 }
@@ -327,7 +338,7 @@ uninstall_all() {
 	darwin)
 		launchd_paths
 		if [ -f "$plist" ]; then
-			launchctl bootout "gui/$uid/$LAUNCHD_LABEL" 2>/dev/null || true
+			launchd_unload
 			as_user rm -f "$plist"
 			log "已移除 launchd 代理 $LAUNCHD_LABEL"
 		fi
