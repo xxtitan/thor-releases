@@ -94,7 +94,7 @@ parse_args() {
 	done
 	case "$channel" in
 	stable | nightly) ;;
-	*) die "未知的发布通道 $channel，可选 stable、nightly" ;;
+	*) die "未知的发布通道 ${channel}，可选 stable、nightly" ;;
 	esac
 }
 
@@ -189,7 +189,7 @@ install_binary() {
 	expected=$(awk -v name="$asset" '$2 == name {print $1}' "$tmp/checksums.txt")
 	[ -n "$expected" ] || die "checksums.txt 中没有 $asset"
 	actual=$(sha256_of "$tmp/thor")
-	[ "$actual" = "$expected" ] || die "$asset 校验失败：SHA-256 为 $actual，应为 $expected"
+	[ "$actual" = "$expected" ] || die "$asset 校验失败：SHA-256 为 ${actual}，应为 $expected"
 	chmod 0755 "$tmp/thor"
 
 	in_dir mkdir -p "$install_dir"
@@ -227,7 +227,7 @@ install_systemd() {
 	as_root systemctl daemon-reload
 	as_root systemctl enable thor.service
 	as_root systemctl restart thor.service
-	log "已安装 systemd 服务 thor（运行用户 $user），查看日志: journalctl -u thor -f"
+	log "已安装 systemd 服务 thor（运行用户 ${user}），查看日志: journalctl -u thor -f"
 }
 
 launchd_plist() {
@@ -295,7 +295,7 @@ install_launchd() {
 	as_user cp "$tmp/thor.plist" "$plist"
 	launchd_unload
 	launchctl bootstrap "gui/$uid" "$plist"
-	log "已安装 launchd 代理 $LAUNCHD_LABEL（运行用户 $user，登录后自动启动），日志: $log_file"
+	log "已安装 launchd 代理 ${LAUNCHD_LABEL}（运行用户 ${user}，登录后自动启动），日志: $log_file"
 }
 
 install_service() {
